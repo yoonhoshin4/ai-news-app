@@ -66,7 +66,7 @@
 ## 7. 데이터 모델
 모든 테이블은 Clerk 사용자 ID(`userId`)로 계정별 분리한다.
 - `categories`: id, userId, name (userId+name 유니크)
-- `articles`: id, userId, sourceName, originalTitle, titleKo, summaryKo, url, publishedAt, categoryId(null=미분류, 카테고리 삭제 시 null), notionPageUrl, createdAt (userId+url 유니크)
+- `articles`: id, userId, sourceName, originalTitle, author(원문 작성자, null 허용), titleKo, summaryKo, url, publishedAt, categoryId(null=미분류, 카테고리 삭제 시 null), notionPageUrl, createdAt (userId+url 유니크)
 - `notion_connections`: userId, 암호화된 인증 정보, 저장 대상 위치, updatedAt
 
 ## 8. 비기능 요구사항

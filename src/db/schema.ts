@@ -25,6 +25,8 @@ export const articles = pgTable(
     userId: text("user_id").notNull(),
     sourceName: text("source_name").notNull(),
     originalTitle: text("original_title").notNull(),
+    // RSS에 작성자가 없을 수 있어 null 허용
+    author: text("author"),
     titleKo: text("title_ko").notNull(),
     summaryKo: text("summary_ko").notNull(),
     url: text("url").notNull(),
