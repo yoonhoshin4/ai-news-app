@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { auth } from "@clerk/nextjs/server";
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { SignInButton } from "@clerk/nextjs";
 import { AutoSignIn } from "@/components/auto-sign-in";
 
 // 서버에서 쿠키로 로그인 여부를 판단한다. (쿠키를 읽으므로 Suspense 안에서 렌더)
@@ -26,17 +27,8 @@ async function HomeContent() {
     );
   }
 
-  return (
-    <>
-      <header className="flex items-center justify-between border-b border-black/10 px-6 py-3 dark:border-white/15">
-        <span className="font-semibold">AI 뉴스 수집기</span>
-        <UserButton />
-      </header>
-      <main className="flex flex-1 items-center justify-center p-6">
-        <p className="text-zinc-600 dark:text-zinc-400">로그인되었습니다.</p>
-      </main>
-    </>
-  );
+  // 로그인된 사용자는 대시보드로 이동
+  redirect("/dashboard");
 }
 
 export default function Home() {

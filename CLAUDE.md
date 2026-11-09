@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI 뉴스 수집 앱: RSS(TechCrunch AI, The Verge AI)로 해외 AI 뉴스를 수집 → Claude Sonnet이 한국어 제목·요약·카테고리를 JSON으로 반환 → 카드로 표시 → 카드 버튼으로 Notion에 저장. 요구사항과 구현 단계의 기준 문서는 `PRD.md`(한국어)이다. 구현은 PRD 12절의 단계 순서를 따르며, 현재 1단계(Clerk·보호 라우트)와 2단계의 스키마 작성까지 끝났고 마이그레이션·시드·이후 단계는 미구현이다.
 
+## UI 가이드
+
+화면(대시보드·카드·카테고리 바 등)을 만들거나 수정할 때는 먼저 `ui.md`를 읽고 따른다. 스타일은 Tailwind CSS v4만 사용하며, 색·간격·컴포넌트 클래스 규칙, 레이아웃, 상태별 화면은 `ui.md`가 기준이다.
+
 ## Next.js 버전 주의
 
 `AGENTS.md`에 따르면 이 Next.js(16.x)는 학습 데이터와 API·규약이 다르다. 코드를 쓰기 전에 `node_modules/next/dist/docs/`의 관련 가이드를 읽을 것. 예를 들어 미들웨어 파일명이 `src/proxy.ts`이고, 레이아웃은 전역 타입 `LayoutProps<"/">`를 쓴다.
