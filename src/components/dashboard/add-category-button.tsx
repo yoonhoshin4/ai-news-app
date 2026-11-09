@@ -31,7 +31,7 @@ export function AddCategoryButton() {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className={`rounded-full border border-dashed border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-400 dark:hover:text-indigo-300 ${focusRing}`}
+        className={`inline-flex min-h-9 items-center rounded-full border border-dashed border-slate-300 px-4 text-sm font-medium text-slate-500 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-400 dark:hover:text-indigo-300 ${focusRing}`}
       >
         + 카테고리 추가
       </button>
@@ -60,7 +60,7 @@ export function AddCategoryButton() {
         onBlur={() => {
           if (!pending && !name.trim()) close();
         }}
-        className={`rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 ${focusRing}`}
+        className={`min-h-9 rounded-full border border-slate-300 bg-white px-4 text-sm text-slate-900 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 ${focusRing}`}
       />
       {error && (
         <p role="alert" className="px-2 text-xs text-red-600 dark:text-red-400">

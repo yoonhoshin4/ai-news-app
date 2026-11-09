@@ -1,8 +1,8 @@
 export type NewsCardData = {
   id: number;
-  titleKo: string;
+  titleKo: string | null;
   originalTitle: string;
-  summaryKo: string;
+  summaryKo: string | null;
   sourceName: string;
   url: string;
   date: Date;
@@ -41,7 +41,7 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
   return (
     <article className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
       <div className="flex items-center justify-between gap-2">
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${badge}`}>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge}`}>
           {article.categoryName ?? "미분류"}
         </span>
         <p className="truncate text-xs text-slate-500 dark:text-slate-400">
@@ -56,18 +56,20 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
         title={article.originalTitle}
         className="mt-3 line-clamp-2 break-words text-lg font-semibold leading-snug text-slate-900 dark:text-slate-100"
       >
-        {article.titleKo}
+        {article.titleKo ?? article.originalTitle}
       </h2>
-      <p className="mt-2 line-clamp-3 break-words text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-        {article.summaryKo}
-      </p>
+      {article.summaryKo && (
+        <p className="mt-2 line-clamp-3 break-words text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          {article.summaryKo}
+        </p>
+      )}
 
       <div className="mt-auto flex items-center justify-between gap-2 pt-4">
         <a
           href={article.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`rounded text-sm font-medium text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 ${focusRing}`}
+          className={`inline-flex min-h-9 items-center rounded text-sm font-medium text-slate-500 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-300 ${focusRing}`}
         >
           원문 보기 ↗
         </a>
@@ -76,7 +78,7 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
             href={article.notionPageUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className={`rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 ${focusRing}`}
+            className={`inline-flex min-h-9 items-center rounded-lg bg-emerald-50 px-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 ${focusRing}`}
           >
             ✓ 저장됨
           </a>
@@ -86,7 +88,7 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
             type="button"
             disabled
             title="Notion 저장은 아직 준비 중이에요"
-            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:text-slate-200"
+            className="min-h-9 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:text-slate-200"
           >
             Notion 저장
           </button>

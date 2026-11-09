@@ -27,8 +27,9 @@ export const articles = pgTable(
     originalTitle: text("original_title").notNull(),
     // RSS에 작성자가 없을 수 있어 null 허용
     author: text("author"),
-    titleKo: text("title_ko").notNull(),
-    summaryKo: text("summary_ko").notNull(),
+    // null = 아직 번역·요약 전 (RSS 수집 직후). Claude 단계에서 채운다.
+    titleKo: text("title_ko"),
+    summaryKo: text("summary_ko"),
     url: text("url").notNull(),
     publishedAt: timestamp("published_at"),
     // null = 미분류. 카테고리 삭제 시 null로 이동
