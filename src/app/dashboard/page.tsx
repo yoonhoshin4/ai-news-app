@@ -9,6 +9,8 @@ import { ensureDefaultCategories } from "@/db/seed";
 import { CategoryBar, type CategoryItem } from "@/components/dashboard/category-bar";
 import { CollectNewsButton } from "@/components/dashboard/collect-news-button";
 import { NewsCard } from "@/components/dashboard/news-card";
+import { NotionConnect, NotionNotice } from "@/components/dashboard/notion-connect";
+import { getConnectionStatus } from "@/lib/notion/auth-store";
 import { Pagination } from "@/components/dashboard/pagination";
 import { ReclassifyButton } from "@/components/dashboard/reclassify-button";
 
@@ -32,6 +34,9 @@ export default function DashboardPage({ searchParams }: PageProps<"/dashboard">)
             AI 뉴스 수집기
           </span>
           <div className="flex items-center gap-3">
+            <Suspense fallback={<div className="h-9 w-24 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />}>
+              <NotionConnect />
+            </Suspense>
             <CollectNewsButton />
             <Suspense fallback={<div className="size-7 animate-pulse rounded-full bg-slate-200 dark:bg-slate-800" />}>
               <UserButton />
@@ -71,14 +76,16 @@ async function DashboardContent({
   const rawCategory = firstParam(params.category);
   const rawPage = Number.parseInt(firstParam(params.page) ?? "", 10);
 
-  const [initialCategories, countRows] = await Promise.all([
+  const [initialCategories, countRows, notionStatus] = await Promise.all([
     getUserCategories(userId),
     db
       .select({ categoryId: articles.categoryId, n: count() })
       .from(articles)
       .where(eq(articles.userId, userId))
       .groupBy(articles.categoryId),
+    getConnectionStatus(userId),
   ]);
+  const notionConnected = notionStatus.connected;
 
   const total = countRows.reduce((sum, r) => sum + r.n, 0);
 
@@ -152,6 +159,7 @@ async function DashboardContent({
 
   return (
     <>
+      <NotionNotice result={firstParam(params.notion)} />
       <div className="mb-6">
         <CategoryBar items={items} selected={selected}>
           {/* 카테고리가 있고 미분류 기사가 있을 때만 보인다 */}
@@ -171,6 +179,7 @@ async function DashboardContent({
                 key={row.id}
                 article={{ ...row, date: publishedAt ?? createdAt }}
                 now={now}
+                notionConnected={notionConnected}
               />
             ))}
           </div>

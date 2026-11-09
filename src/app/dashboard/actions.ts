@@ -8,6 +8,8 @@ import { articles, categories } from "@/db/schema";
 import { fetchRecentArticles, type FeedArticle } from "@/lib/rss/fetch-feed";
 import { RSS_SOURCES } from "@/lib/rss/sources";
 import { EnrichError, classifyArticle, enrichArticle } from "@/lib/ai/enrich-article";
+import { getConnectionStatus } from "@/lib/notion/auth-store";
+import { NotionSaveError, saveArticleToNotion } from "@/lib/notion/save-article";
 
 const ENRICH_BATCH_SIZE = 5;
 const ENRICH_CONCURRENCY = 3;
@@ -245,6 +247,61 @@ export async function reclassifyArticles(excludeIds: number[] = []): Promise<Rec
 
   revalidatePath("/dashboard");
   return { ok: true, attemptedIds, classified, failed, remaining: n, stopReason };
+}
+
+export type SaveToNotionResult =
+  | { ok: true; pageUrl: string }
+  | { ok: false; error: string; needsConnect?: boolean };
+
+// 기사 1건을 Notion에 저장하고 페이지 URL을 articles.notionPageUrl에 기록한다 (Claude 호출 없음).
+export async function saveToNotion(articleId: number): Promise<SaveToNotionResult> {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "로그인이 필요해요." };
+
+  const [row] = await db
+    .select({
+      titleKo: articles.titleKo,
+      summaryKo: articles.summaryKo,
+      originalTitle: articles.originalTitle,
+      sourceName: articles.sourceName,
+      url: articles.url,
+      publishedAt: articles.publishedAt,
+      notionPageUrl: articles.notionPageUrl,
+      categoryName: categories.name,
+    })
+    .from(articles)
+    .leftJoin(categories, eq(articles.categoryId, categories.id))
+    .where(and(eq(articles.id, articleId), eq(articles.userId, userId)));
+
+  if (!row) return { ok: false, error: "기사를 찾을 수 없어요." };
+  if (row.notionPageUrl) return { ok: true, pageUrl: row.notionPageUrl }; // 이미 저장됨 (중복 방지)
+  if (!row.titleKo || !row.summaryKo) {
+    return { ok: false, error: "번역이 끝난 뒤에 저장할 수 있어요." };
+  }
+
+  const status = await getConnectionStatus(userId);
+  if (!status.connected) {
+    return { ok: false, error: "먼저 Notion을 연결해 주세요.", needsConnect: true };
+  }
+
+  try {
+    const pageUrl = await saveArticleToNotion(userId, {
+      ...row,
+      titleKo: row.titleKo,
+      summaryKo: row.summaryKo,
+    });
+    await db
+      .update(articles)
+      .set({ notionPageUrl: pageUrl })
+      .where(and(eq(articles.id, articleId), eq(articles.userId, userId)));
+    revalidatePath("/dashboard");
+    return { ok: true, pageUrl };
+  } catch (e) {
+    if (e instanceof NotionSaveError) {
+      return { ok: false, error: e.message, needsConnect: e.kind === "auth" };
+    }
+    throw e;
+  }
 }
 
 export type CategoryActionResult = { ok: true } | { ok: false; error: string };
