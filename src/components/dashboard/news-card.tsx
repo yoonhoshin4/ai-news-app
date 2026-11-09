@@ -1,3 +1,5 @@
+import { SaveToNotionButton } from "./save-to-notion-button";
+
 export type NewsCardData = {
   id: number;
   titleKo: string | null;
@@ -33,7 +35,15 @@ function formatDate(date: Date, now: number) {
 const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900";
 
-export function NewsCard({ article, now }: { article: NewsCardData; now: number }) {
+export function NewsCard({
+  article,
+  now,
+  notionConnected,
+}: {
+  article: NewsCardData;
+  now: number;
+  notionConnected: boolean;
+}) {
   const badge = article.categoryName
     ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
     : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
@@ -87,15 +97,11 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
             ✓ 저장됨
           </a>
         ) : (
-          // Notion 저장은 아직 미구현 (PRD 12절 이후 단계)
-          <button
-            type="button"
-            disabled
-            title="Notion 저장은 아직 준비 중이에요"
-            className="min-h-9 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:text-slate-200"
-          >
-            Notion 저장
-          </button>
+          <SaveToNotionButton
+            articleId={article.id}
+            connected={notionConnected}
+            ready={Boolean(article.titleKo && article.summaryKo)}
+          />
         )}
       </div>
     </article>
