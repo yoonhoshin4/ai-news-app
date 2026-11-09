@@ -14,9 +14,12 @@ export type CategoryItem = {
 export function CategoryBar({
   items,
   selected,
+  children,
 }: {
   items: CategoryItem[];
   selected: string;
+  /** 추가 버튼 뒤에 붙는 보조 동작 (예: 미분류 재분류) */
+  children?: React.ReactNode;
 }) {
   return (
     <nav aria-label="카테고리" className="flex flex-wrap items-center gap-2">
@@ -31,6 +34,7 @@ export function CategoryBar({
         />
       ))}
       <AddCategoryButton />
+      {children}
     </nav>
   );
 }

@@ -58,9 +58,13 @@ export function NewsCard({ article, now }: { article: NewsCardData; now: number 
       >
         {article.titleKo ?? article.originalTitle}
       </h2>
-      {article.summaryKo && (
+      {article.summaryKo ? (
         <p className="mt-2 line-clamp-3 break-words text-sm leading-relaxed text-slate-600 dark:text-slate-300">
           {article.summaryKo}
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          번역 대기 중 · 뉴스 가져오기를 누르면 번역돼요
         </p>
       )}
 

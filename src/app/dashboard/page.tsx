@@ -10,6 +10,7 @@ import { CategoryBar, type CategoryItem } from "@/components/dashboard/category-
 import { CollectNewsButton } from "@/components/dashboard/collect-news-button";
 import { NewsCard } from "@/components/dashboard/news-card";
 import { Pagination } from "@/components/dashboard/pagination";
+import { ReclassifyButton } from "@/components/dashboard/reclassify-button";
 
 export const metadata: Metadata = { title: "대시보드 · AI 뉴스 수집기" };
 
@@ -89,6 +90,7 @@ async function DashboardContent({
   }
 
   const counts = new Map(countRows.map((r) => [r.categoryId, r.n]));
+  const uncategorizedCount = counts.get(null) ?? 0;
 
   const items: CategoryItem[] = [
     { key: "all", label: "전체", count: total },
@@ -151,7 +153,12 @@ async function DashboardContent({
   return (
     <>
       <div className="mb-6">
-        <CategoryBar items={items} selected={selected} />
+        <CategoryBar items={items} selected={selected}>
+          {/* 카테고리가 있고 미분류 기사가 있을 때만 보인다 */}
+          {userCategories.length > 0 && uncategorizedCount > 0 && (
+            <ReclassifyButton count={uncategorizedCount} />
+          )}
+        </CategoryBar>
       </div>
 
       {rows.length === 0 ? (

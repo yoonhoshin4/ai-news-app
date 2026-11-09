@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-AI 뉴스 수집 앱: RSS(TechCrunch AI, The Verge AI)로 해외 AI 뉴스를 수집 → Claude Sonnet이 한국어 제목·요약·카테고리를 JSON으로 반환 → 카드로 표시 → 카드 버튼으로 Notion에 저장. 요구사항과 구현 단계의 기준 문서는 `PRD.md`(한국어)이다. 구현은 PRD 12절의 단계 순서를 따르며, 현재 1단계(Clerk·보호 라우트)와 2단계의 스키마 작성까지 끝났고 마이그레이션·시드·이후 단계는 미구현이다.
+AI 뉴스 수집 앱: RSS(TechCrunch AI, The Verge AI)로 해외 AI 뉴스를 수집 → Claude Haiku 5.5가 한국어 제목·요약·카테고리를 JSON으로 반환 → 카드로 표시 → 카드 버튼으로 Notion에 저장. 요구사항과 구현 단계의 기준 문서는 `PRD.md`(한국어)이다. 구현은 PRD 12절의 단계 순서를 따르며, 현재 인증, DB 스키마·마이그레이션·시드, 대시보드 화면, RSS 수집("뉴스 가져오기"), Claude 번역·요약·분류까지 구현했고 Notion 저장은 미구현이다.
 
 ## UI 가이드
 
@@ -30,4 +30,5 @@ AI 뉴스 수집 앱: RSS(TechCrunch AI, The Verge AI)로 해외 AI 뉴스를 �
   - `articles.categoryId`는 카테고리 삭제 시 `set null`이며, null이 곧 "미분류"이다.
   - `notion_connections.encryptedAuth`는 암호화된 OAuth 토큰/클라이언트 등록 JSON이다 (`TOKEN_ENCRYPTION_KEY`로 암호화).
 - **DB 클라이언트**: `src/db/index.ts`는 Neon HTTP 드라이버 + Drizzle(`neon-http`)이다.
-- **계획된 흐름(미구현)**: "뉴스 가져오기"로만 수집(스케줄 없음), 소스당 최대 10건, 기사 1건당 Claude 1회 호출, 응답은 zod로 검증하고 사용자의 현재 카테고리 목록 안에서만 분류한다. Notion 저장은 서버가 `@modelcontextprotocol/sdk` 클라이언트로 `https://mcp.notion.com/mcp`를 직접 호출한다(OAuth 2.0 + PKCE, 사용자별 연결, Claude 호출 없음). Anthropic 키와 Notion 토큰은 서버에서만 사용한다.
+- **수집·번역 흐름(구현됨)**: "뉴스 가져오기"로만 수집(스케줄 없음). `collectNews`(`src/app/dashboard/actions.ts`)가 `src/lib/rss`로 지난 48시간 기사를 소스당 최대 10건 받아 `articles`에 저장한다(제목·요약·카테고리는 null, RSS 발췌문은 `excerpt`). 이어서 클라이언트 버튼이 `enrichArticles`를 5건씩 반복 호출하며, `title_ko IS NULL`인 기사를 `src/lib/ai/enrich-article.ts`가 기사 1건당 Claude 1회로 번역·요약·분류한다(응답은 zod 구조화 출력, 사용자의 현재 카테고리 목록 안에서만 분류, 없으면 미분류). 실패한 기사는 null로 남아 다음 수집 때 자동 재시도된다. 미분류 기사는 카테고리 바의 "미분류 N건 다시 분류" 버튼(`reclassifyArticles`, `classifyArticle`)으로 사용자가 누를 때만 재분류한다. 모델은 `src/lib/ai/client.ts`의 `ENRICH_MODEL`.
+- **계획된 흐름(미구현)**: Notion 저장은 서버가 `@modelcontextprotocol/sdk` 클라이언트로 `https://mcp.notion.com/mcp`를 직접 호출한다(OAuth 2.0 + PKCE, 사용자별 연결, Claude 호출 없음). Anthropic 키와 Notion 토큰은 서버에서만 사용한다.

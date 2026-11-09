@@ -27,6 +27,8 @@ export const articles = pgTable(
     originalTitle: text("original_title").notNull(),
     // RSS에 작성자가 없을 수 있어 null 허용
     author: text("author"),
+    // RSS 발췌문(HTML 제거, 길이 제한). Claude 번역·요약의 입력으로 쓴다.
+    excerpt: text("excerpt"),
     // null = 아직 번역·요약 전 (RSS 수집 직후). Claude 단계에서 채운다.
     titleKo: text("title_ko"),
     summaryKo: text("summary_ko"),

@@ -7,7 +7,27 @@ export type FeedArticle = {
   author: string | null;
   url: string;
   publishedAt: Date;
+  excerpt: string | null;
 };
+
+const MAX_EXCERPT_CHARS = 1500;
+
+// HTML 태그·엔티티를 제거하고 공백을 정리한 뒤 길이를 제한한다.
+function toExcerpt(html: string | undefined): string | null {
+  if (!html) return null;
+  const text = html
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;|&#8217;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  return text ? text.slice(0, MAX_EXCERPT_CHARS) : null;
+}
 
 const WINDOW_MS = 48 * 60 * 60 * 1000;
 export const MAX_PER_SOURCE = 10;
@@ -56,6 +76,7 @@ export async function fetchRecentArticles(
       author: item.creator?.trim() || null,
       url,
       publishedAt: new Date(time),
+      excerpt: toExcerpt(item["content:encoded"] ?? item.content ?? item.contentSnippet),
     });
   }
 
