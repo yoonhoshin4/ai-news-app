@@ -22,6 +22,10 @@ AI 뉴스 수집 앱: RSS(TechCrunch AI, The Verge AI)로 해외 AI 뉴스를 �
 - DB: `npx drizzle-kit generate` (마이그레이션 생성, 출력은 `./drizzle`), `npx drizzle-kit migrate` (적용). `drizzle.config.ts`가 `.env.local`의 `DATABASE_URL`을 읽는다.
 - 환경변수는 `.env.example`을 복사해 `.env.local`에 채운다 (`.env*`는 gitignore됨). `TOKEN_ENCRYPTION_KEY`는 hex 64자(32바이트).
 
+## 커스텀 명령
+
+- `/news-workflow [브랜치-이름]` (`.claude/commands/news-workflow.md`): 새 기능 개발 워크플로. 현재 상태 확인(main이 아니면 이동 여부를 묻는다) → 새 브랜치 생성(이름이 없으면 기능을 물어 영어 소문자-하이픈 이름을 제안) → 개발 시작 안내(기술 스택·컨벤션 재안내) → 사용자가 `완료`/`done`을 입력하면 변경 파일과 한국어 커밋 메시지를 확인받아 커밋하고 main에 병합 → 브랜치·커밋 해시·변경 파일·구현 내용 요약.
+
 ## Architecture
 
 - **인증/접근 차단**: `src/proxy.ts`가 Clerk 미들웨어로 `/sign-in`, `/sign-up`을 제외한 모든 경로와 `/api`, `/trpc`를 `auth.protect()`로 막는다. `ClerkProvider`는 `src/app/layout.tsx`에 있다.

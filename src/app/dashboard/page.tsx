@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
-import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories } from "@/db/schema";
 import { ensureDefaultCategories } from "@/db/seed";
@@ -13,6 +13,7 @@ import { NotionConnect, NotionNotice } from "@/components/dashboard/notion-conne
 import { getConnectionStatus } from "@/lib/notion/auth-store";
 import { Pagination } from "@/components/dashboard/pagination";
 import { ReclassifyButton } from "@/components/dashboard/reclassify-button";
+import { SearchForm } from "@/components/dashboard/search-form";
 
 export const metadata: Metadata = { title: "대시보드 · AI 뉴스 수집기" };
 
@@ -65,6 +66,22 @@ function firstParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+// 공백으로 나눈 키워드를 모두 포함(AND)하는 기사만. 각 키워드는 제목·원문 제목·요약 중 하나에 있으면 된다.
+function searchFilter(query: string) {
+  const terms = query.split(/\s+/).filter(Boolean);
+  if (terms.length === 0) return undefined;
+  return and(
+    ...terms.map((term) => {
+      const pattern = `%${term.replace(/[\\%_]/g, "\\$&")}%`; // LIKE 와일드카드 이스케이프
+      return or(
+        ilike(articles.titleKo, pattern),
+        ilike(articles.originalTitle, pattern),
+        ilike(articles.summaryKo, pattern),
+      );
+    }),
+  );
+}
+
 async function DashboardContent({
   searchParams,
 }: {
@@ -75,23 +92,29 @@ async function DashboardContent({
   const params = await searchParams;
   const rawCategory = firstParam(params.category);
   const rawPage = Number.parseInt(firstParam(params.page) ?? "", 10);
+  const query = (firstParam(params.q) ?? "").trim().slice(0, 100);
+  const keywordFilter = searchFilter(query);
 
-  const [initialCategories, countRows, notionStatus] = await Promise.all([
+  const [initialCategories, countRows, [allRow], notionStatus] = await Promise.all([
     getUserCategories(userId),
+    // 카테고리 칩의 개수는 검색 결과 기준이다.
     db
       .select({ categoryId: articles.categoryId, n: count() })
       .from(articles)
-      .where(eq(articles.userId, userId))
+      .where(and(eq(articles.userId, userId), keywordFilter))
       .groupBy(articles.categoryId),
+    // 검색과 무관한 전체 기사 수 (기본 카테고리 생성·빈 화면 문구 판단용)
+    db.select({ n: count() }).from(articles).where(eq(articles.userId, userId)),
     getConnectionStatus(userId),
   ]);
   const notionConnected = notionStatus.connected;
 
   const total = countRows.reduce((sum, r) => sum + r.n, 0);
+  const totalAll = allRow?.n ?? 0;
 
   // 카테고리도 기사도 없는 신규 사용자에게는 기본 카테고리를 만들어 준다 (PRD 5.5).
   let userCategories = initialCategories;
-  if (userCategories.length === 0 && total === 0) {
+  if (userCategories.length === 0 && totalAll === 0) {
     await ensureDefaultCategories(userId);
     userCategories = await getUserCategories(userId);
   }
@@ -142,7 +165,7 @@ async function DashboardContent({
     })
     .from(articles)
     .leftJoin(categories, eq(articles.categoryId, categories.id))
-    .where(and(eq(articles.userId, userId), categoryFilter))
+    .where(and(eq(articles.userId, userId), categoryFilter, keywordFilter))
     .orderBy(desc(sortDate), desc(articles.id))
     .limit(PAGE_SIZE)
     .offset((page - 1) * PAGE_SIZE);
@@ -150,6 +173,7 @@ async function DashboardContent({
   function pageHref(p: number) {
     const q = new URLSearchParams();
     if (selected !== "all") q.set("category", selected);
+    if (query) q.set("q", query);
     if (p > 1) q.set("page", String(p));
     const qs = q.toString();
     return qs ? `/dashboard?${qs}` : "/dashboard";
@@ -160,8 +184,12 @@ async function DashboardContent({
   return (
     <>
       <NotionNotice result={firstParam(params.notion)} />
+      {/* 검색은 카드 목록 위, 카테고리 바 위에 둔다. key로 URL 키워드가 바뀌면 입력값도 맞춘다 */}
+      <div className="mb-4">
+        <SearchForm key={`${selected}:${query}`} query={query} category={selected} />
+      </div>
       <div className="mb-6">
-        <CategoryBar items={items} selected={selected}>
+        <CategoryBar items={items} selected={selected} query={query}>
           {/* 카테고리가 있고 미분류 기사가 있을 때만 보인다 */}
           {userCategories.length > 0 && uncategorizedCount > 0 && (
             <ReclassifyButton count={uncategorizedCount} />
@@ -170,7 +198,7 @@ async function DashboardContent({
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState hasAny={total > 0} />
+        <EmptyState hasAny={totalAll > 0} query={query} />
       ) : (
         <>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
@@ -190,7 +218,7 @@ async function DashboardContent({
   );
 }
 
-function EmptyState({ hasAny }: { hasAny: boolean }) {
+function EmptyState({ hasAny, query }: { hasAny: boolean; query: string }) {
   return (
     <div className="flex flex-col items-center py-20 text-center">
       <svg
@@ -207,7 +235,16 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
         <path d="M19 9h2v9a2 2 0 0 1-2 2" />
         <path d="M8 9h7M8 13h7M8 17h4" />
       </svg>
-      {hasAny ? (
+      {query ? (
+        <>
+          <p className="mt-4 text-base font-semibold break-all text-slate-900 dark:text-slate-100">
+            &lsquo;{query}&rsquo; 검색 결과가 없어요
+          </p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            다른 키워드로 검색하거나 카테고리를 &lsquo;전체&rsquo;로 바꿔 보세요.
+          </p>
+        </>
+      ) : hasAny ? (
         <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
           이 카테고리에는 아직 뉴스가 없어요.
         </p>
@@ -228,7 +265,8 @@ function EmptyState({ hasAny }: { hasAny: boolean }) {
 function DashboardSkeleton() {
   return (
     <div role="status" aria-busy="true" aria-label="뉴스를 불러오는 중">
-      {/* 카테고리 바 자리 (레이아웃이 밀리지 않도록 같은 높이) */}
+      {/* 검색창·카테고리 바 자리 (레이아웃이 밀리지 않도록 같은 높이) */}
+      <div className="mb-4 h-10 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-800" />
       <div className="mb-6 flex flex-wrap gap-2">
         {[20, 24, 16, 28, 24, 20].map((w, i) => (
           <div
