@@ -384,3 +384,22 @@ export async function deleteCategory(id: number): Promise<CategoryActionResult> 
   revalidatePath("/dashboard");
   return { ok: true };
 }
+
+export type DeleteArticleResult = { ok: true } | { ok: false; error: string };
+
+// 기사 1건을 DB에서 삭제한다. 이미 Notion에 저장한 페이지는 그대로 둔다.
+export async function deleteArticle(articleId: number): Promise<DeleteArticleResult> {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "로그인이 필요해요." };
+
+  try {
+    await db
+      .delete(articles)
+      .where(and(eq(articles.id, articleId), eq(articles.userId, userId)));
+  } catch {
+    return { ok: false, error: "삭제하지 못했어요. 잠시 후 다시 시도해 주세요." };
+  }
+
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

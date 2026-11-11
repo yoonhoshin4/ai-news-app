@@ -1,3 +1,4 @@
+import { DeleteArticleButton } from "./delete-article-button";
 import { SaveToNotionButton } from "./save-to-notion-button";
 
 export type NewsCardData = {
@@ -49,8 +50,9 @@ export function NewsCard({
     : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 
   return (
-    <article className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between gap-2">
+    <article className="relative flex flex-col rounded-xl border border-slate-200 bg-white p-5 transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+      <DeleteArticleButton articleId={article.id} />
+      <div className="flex items-center justify-between gap-2 pr-8">
         <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badge}`}>
           {article.categoryName ?? "미분류"}
         </span>
