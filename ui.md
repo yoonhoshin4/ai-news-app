@@ -91,7 +91,7 @@
 - **전체**: 모든 뉴스를 보여주는 고정 항목, 기본 선택 상태. **미분류**: `categoryId`가 null인 뉴스. 둘 다 이름 수정·삭제 불가.
 - 칩 기본(미선택): `rounded-full border border-slate-200 bg-white px-4 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800`
 - 칩 선택됨: `border-indigo-600 bg-indigo-600 text-white dark:border-indigo-500 dark:bg-indigo-500` (미선택 클래스의 색을 대체)
-- 각 칩에 해당 카테고리의 뉴스 개수를 작은 숫자로 덧붙인다 (예: `연구 12`, `text-xs opacity-70 ml-1.5`).
+- 각 칩에 해당 카테고리의 뉴스 개수를 둥근 배지로 덧붙인다 (예: `연구 (12)`). 배지: `ml-1.5 min-w-5 rounded-full px-1.5 text-xs font-semibold tabular-nums`. 미선택은 `bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300`, 선택됨은 `bg-white/25 text-white`.
 - **카테고리 추가 버튼**: 칩과 같은 크기이되 점선 테두리로 구분한다.
   - `rounded-full border border-dashed border-slate-300 px-4 py-1.5 text-sm font-medium text-slate-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400`
   - 라벨은 `+ 카테고리 추가`. 모바일에서도 라벨을 줄이지 않는다.

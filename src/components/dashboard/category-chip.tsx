@@ -126,7 +126,16 @@ export function CategoryChip({ href, label, count, active: isActive, categoryId 
           } ${focusRing}`}
         >
           {label}
-          <span className="ml-1.5 text-xs opacity-70">{count}</span>
+          <span
+            aria-label={`${count}건`}
+            className={`ml-1.5 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold tabular-nums ${
+              isActive
+                ? "bg-white/25 text-white"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            }`}
+          >
+            {count}
+          </span>
           <PendingSpinner />
         </Link>
         {categoryId !== undefined && (
